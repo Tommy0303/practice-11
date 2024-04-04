@@ -8,8 +8,8 @@
         <form action="{{ route('products.store') }}" method="POST">
             @csrf
             <div class="form-group">
-                <label for="name">商品名</label>
-                <input type="text" name="name" id="name" class="form-control">
+                <label for="product_name">商品名</label>
+                <input type="text" name="product_name" id="product_name" class="form-control">
             </div>
             <div class="form-group">
                 <label for="price">価格</label>
@@ -20,8 +20,16 @@
                 <input type="number" name="stock" id="stock" class="form-control">
             </div>
             <div class="form-group">
-                <label for="manufacturer">メーカー</label>
-                <input type="text" name="manufacturer" id="manufacturer" class="form-control">
+                <label for="company_name">メーカー</label>
+                <input type="text" name="company_name" id="company_name" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="comment">コメント</label>
+                <textarea name="comment" id="comment" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">商品画像</label>
+                <input type="file" name="img_path" id="image" class="form-control-file">
             </div>
             <button type="submit" class="btn btn-primary">登録</button>
             <a href="{{ route('products.index') }}" class="btn btn-secondary">戻る</a>

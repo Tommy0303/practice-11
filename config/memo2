@@ -1,0 +1,50 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            // ① 既存のcompany_idカラムを削除する
+            $table->dropColumn('company_id');
+            // ② 新しいカラムを追加する
+            $table->integer('company_id');
+            $table->text('comment')->nullable();
+            $table->string('img_path')->nullable();
+            // ③ company_idカラムに外部キー制約を追加する
+            $table->foreign('company_id')->references('id')->on('companies');
+        });
+
+        Schema::table('products', function (Blueprint $table) {
+            // ④ makernameカラムを削除する
+            $table->dropColumn('makername');
+            // ⑤ stockとpriceカラムの型を変更する
+            $table->integer('stock')->change();
+            $table->integer('price')->change();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            // ① 新しいカラムを削除する
+            $table->dropColumn(['company_id', 'comment', 'img_path']);
+            // ② 旧カラムを再作成する
+            $table->integer('company_id');
+            $table->string('makername');
+            // ③ stockとpriceカラムの型を戻す
+            $table->string('stock')->change();
+            $table->string('price')->change();
+        });
+    }
+};

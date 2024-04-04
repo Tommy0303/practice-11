@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->integer('stock')->default(0)->change();
-            $table->decimal('price', 8, 2)->default(0.00)->change();
+            $table->timestamps();
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->integer('stock')->change();
-            $table->decimal('price', 8, 2)->change();
+            //
         });
     }
 };

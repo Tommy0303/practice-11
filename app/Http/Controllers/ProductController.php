@@ -5,37 +5,62 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\Company;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
-        return view('products.index', compact('products'));
+        $query = Product::query();
+        $companies = Company::all(); 
+
+        if ($request->has('keyword')) {
+            $query->where('product_name', 'like', '%' . $request->keyword . '%');
+        }
+    
+        if ($request->has('manufacturer')) {
+            $query->where('company_id', $request->manufacturer);
+        }
+    
+        $products = $query->get();
+
+        return view('products.index', compact('products', 'companies'));
     }
     public function edit(Product $product)
     {
-        return view('products.edit', compact('product'));
+        $companies = Company::all(); 
+        return view('products.edit', compact('product', 'companies'));
     }
     public function create()
     {
-        return view('products.create');
+        $companies = Company::all(); 
+        return view('products.create', compact('companies'));
     }
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'product_name' => 'required|string|max:255',
             'price' => 'required|numeric',
             'stock' => 'required|numeric',
-            'manufacturer' => 'required|string|max:255',
-            
+            'company_name' => 'required|string|max:255',
         ]);
+        
+        $companyName = $request->input('company_name');
 
+        $existingCompany = Company::where('company_name', $companyName)->first();
+    
+        if ($existingCompany) {
+            $companyId = $existingCompany->id;
+        } else {
+            $newCompany = Company::create(['company_name' => $companyName]);
+            $companyId = $newCompany->id;
+        }
+        
         $product = new Product();
-        $product->name = $request->input('name');
+        $product->product_name = $request->input('product_name');
         $product->price = $request->input('price');
         $product->stock = $request->input('stock');
-        $product->manufacturer = $request->input('manufacturer');
+        $product->company_id = $companyId;
 
         $product->save();
 
@@ -44,17 +69,27 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'product_name' => 'required|string|max:255',
             'price' => 'required|numeric',
             'stock' => 'required|numeric',
-            'manufacturer' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255', 
         ]);
-
-        $product->name = $request->input('name');
+    
+        $companyName = $request->input('company_name');
+    
+        $existingCompany = Company::where('company_name', $companyName)->first();
+    
+        if ($existingCompany) {
+            $companyId = $existingCompany->id;
+        } else {
+            $newCompany = Company::create(['company_name' => $companyName]);
+            $companyId = $newCompany->id;
+        }
+    
+        $product->product_name = $request->input('product_name');
         $product->price = $request->input('price');
         $product->stock = $request->input('stock');
-        $product->manufacturer = $request->input('manufacturer');
-
+        $product->company_id = $companyId;
         $product->save();
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully!');
@@ -69,6 +104,10 @@ class ProductController extends Controller
         } else {
             return redirect()->route('products.index')->with('error', 'Product not found');
         }
+    }
+    public function detail(Product $product)
+    {
+        return view('products.detail', compact('product'));
     }
 
 }
