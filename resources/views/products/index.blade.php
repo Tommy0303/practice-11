@@ -45,7 +45,7 @@
                         <td>{{ $product->price }}</td>
                         <td>{{ $product->stock }}</td>
                         <td>{{ $product->company ? $product->company->company_name : '未設定' }}</td>
-                        <td><img src="{{ asset($product->img_path) }}" alt="商品画像" style="max-width: 100px;"></td>
+                        <td><img src="{{ asset($product->img_path) }}" alt="商品画像" class="product-image"></td>
                         <td>
                             <a href="{{ route('products.detail', $product->id) }}" class="btn btn-sm btn-primary">詳細</a>
                             <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="d-inline">
@@ -60,3 +60,7 @@
         </table>
     </div>
 @endsection
+
+@push('styles')
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+@endpush
