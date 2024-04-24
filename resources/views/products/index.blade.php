@@ -1,5 +1,3 @@
-
-
 @extends('layouts.app')
 
 @section('content')
@@ -10,14 +8,16 @@
                 <div class="col-md-4">
                     <input type="text" name="keyword" class="form-control" placeholder="商品名を入力">
                 </div>
-                <div class="col-md-4">
-                    <select name="manufacturer" class="form-control">
-                        <option value="">メーカーを選択</option>
-                        @foreach($companies as $company)
-                            <option value="{{ $company->id }}">{{  $company->company_name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                @if($companies->count() > 0)
+                    <div class="col-md-4">
+                        <select name="manufacturer" class="form-control">
+                            <option value="">メーカーを選択</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}">{{  $company->company_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">検索</button>
                 </div>
