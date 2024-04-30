@@ -10,7 +10,7 @@
                     <div class="card-header">商品詳細</div>
 
                     <div class="card-body">
-                        <p>ID: {{ $product->product_id }}</p>
+                        <p>ID: {{ $product->id }}</p>
                         <p>商品名: {{ $product->product_name }}</p>
                         <p>価格: {{ $product->price }}</p>
                         <p>在庫数: {{ $product->stock }}</p>

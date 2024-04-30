@@ -19,12 +19,16 @@ class ProductController extends Controller
             $keyword = $request->keyword;
             $query->where('product_name', 'like', '%' . $keyword . '%');
         }
-    
-        if ($request->has('manufacturer')) {
-            $query->where('company_id', $request->manufacturer);
-        }
-    
-        $products = $query->get();
+
+            if ($request->filled('keyword') && !$request->filled('manufacturer')) {
+                $products = $query->get();
+            } else {
+                // キーワードが入力されていない、またはメーカーが選択されている場合、通常の検索を行う
+                if ($request->filled('manufacturer')) {
+                    $query->where('company_id', $request->manufacturer);
+                }
+                $products = $query->get();
+            }
 
         return view('products.index', compact('products', 'companies'));
     }
@@ -52,8 +56,7 @@ class ProductController extends Controller
         $image = $request->file('image');
         $fileName = $image->getClientOriginalName(); 
         $imagePath = $image->storeAs('public/images', $fileName); 
-        $imageUrl = str_replace('public/', 'storage/', $imagePath); 
-
+        $imageUrl = 'images/' . $fileName;
         $product = new Product();
         $product->product_name = $request->input('product_name');
         $product->price = $request->input('price');
@@ -62,6 +65,11 @@ class ProductController extends Controller
         $product->img_path = $imageUrl; 
 
         $product->save();
+
+        try {
+        } catch (\Exception $e) {
+            return back()->withError($e->getMessage());
+        }
 
         return redirect()->route('products.index')->with('success', 'Product created successfully!');
     } else {
@@ -94,6 +102,11 @@ class ProductController extends Controller
 
     $product->save();
 
+    try {
+    } catch (\Exception $e) {
+        return back()->withError($e->getMessage());
+    }
+
     return redirect()->route('products.index')->with('success', 'Product updated successfully!');
 }
     public function destroy($id)
@@ -105,6 +118,11 @@ class ProductController extends Controller
             return redirect()->route('products.index')->with('success', 'Product deleted successfully');
         } else {
             return redirect()->route('products.index')->with('error', 'Product not found');
+        }
+
+        try {
+        } catch (\Exception $e) {
+            return back()->withError($e->getMessage());
         }
     }
     public function detail(Product $product)
