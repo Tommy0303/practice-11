@@ -11,27 +11,47 @@ use Illuminate\Support\Facades\DB;
 class ProductController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = Product::query();
-        $companies = Company::all(); 
+{
+    $query = Product::query();
+    $companies = Company::all();
 
-        if ($request->has('keyword')) {
-            $keyword = $request->keyword;
-            $query->where('product_name', 'like', '%' . $keyword . '%');
-        }
-
-            if ($request->filled('keyword') && !$request->filled('manufacturer')) {
-                $products = $query->get();
-            } else {
-                // キーワードが入力されていない、またはメーカーが選択されている場合、通常の検索を行う
-                if ($request->filled('manufacturer')) {
-                    $query->where('company_id', $request->manufacturer);
-                }
-                $products = $query->get();
-            }
-
-        return view('products.index', compact('products', 'companies'));
+    // キーワード検索
+    if ($request->filled('keyword')) {
+        $query->where('product_name', 'like', '%' . $request->keyword . '%');
     }
+
+    // メーカー検索
+    if ($request->filled('manufacturer')) {
+        $query->where('company_id', $request->manufacturer);
+    }
+
+    // 価格検索
+    if ($request->filled('price_min')) {
+        $query->where('price', '>=', $request->price_min);
+    }
+    if ($request->filled('price_max')) {
+        $query->where('price', '<=', $request->price_max);
+    }
+
+    // 在庫数検索
+    if ($request->filled('stock_min')) {
+        $query->where('stock', '>=', $request->stock_min);
+    }
+    if ($request->filled('stock_max')) {
+        $query->where('stock', '<=', $request->stock_max);
+    }
+
+    // クエリを実行して結果を取得
+    $products = $query->with('company')->get();
+
+    // AJAXリクエストの場合、JSON形式でデータを返す
+    if ($request->ajax()) {
+        return response()->json(['products' => $products]);
+    }
+
+    // 通常リクエストの場合、ビューを返す
+    return view('products.index', compact('products', 'companies'));
+}
     public function edit(Product $product)
     {
         $companies = Company::all(); 

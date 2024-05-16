@@ -18,6 +18,18 @@
                             </select>
                         </div>
                     @endif
+                    <div class="col-md-2">
+                <input type="number" name="price_min" class="form-control" placeholder="最低価格">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="price_max" class="form-control" placeholder="最高価格">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="stock_min" class="form-control" placeholder="最低在庫">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="stock_max" class="form-control" placeholder="最高在庫">
+            </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">検索</button>
                 </div>
@@ -60,6 +72,69 @@
         </table>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#search-form').submit(function(event) {
+        event.preventDefault();
+        $.ajax({
+            url: "{{ route('products.index') }}",
+            method: 'GET',
+            data: $(this).serialize(),
+            success: function(data) {
+                $('#product-list').empty();
+                data.products.forEach(function(product) {
+                    $('#product-list').append(`
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>${product.product_name}</td>
+                            <td>${product.price}</td>
+                            <td>${product.stock}</td>
+                            <td>${product.company ? product.company.company_name : '未設定'}</td>
+                            <td><img src="{{ asset('${product.img_path}') }}" alt="商品画像" class="product-image"></td>
+                            <td>
+                                <a href="/products/${product.id}" class="btn btn-sm btn-primary">詳細</a>
+                                <form action="/products/${product.id}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('本当に削除しますか？')">削除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                attachDeleteHandlers();
+
+            }
+        });
+    });
+
+    function attachDeleteHandlers() {
+        $('.delete-button').click(function() {
+            var productId = $(this).data('id');
+            if (confirm('本当に削除しますか？')) {
+                $.ajax({
+                    url: '/products/' + productId,
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        _method: 'DELETE'
+                    },
+                    success: function() {
+                        $('#product-' + productId).remove();
+                    }
+                });
+            }
+        });
+    }
+
+    attachDeleteHandlers();
+});
+</script>
+@endpush
+
 
 @push('styles')
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
