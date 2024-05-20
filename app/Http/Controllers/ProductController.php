@@ -12,8 +12,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
 {
+    // プロダクトのクエリを作成
     $query = Product::query();
-    $companies = Company::all();
 
     // キーワード検索
     if ($request->filled('keyword')) {
@@ -41,17 +41,16 @@ class ProductController extends Controller
         $query->where('stock', '<=', $request->stock_max);
     }
 
-    // クエリを実行して結果を取得
-    $products = $query->with('company')->get();
+    // ページネーションを適用してプロダクトを取得
+    $products = $query->sortable()->paginate(10);
 
-    // AJAXリクエストの場合、JSON形式でデータを返す
-    if ($request->ajax()) {
-        return response()->json(['products' => $products]);
-    }
+    // 会社のリストを取得
+    $companies = Company::all();
 
-    // 通常リクエストの場合、ビューを返す
+    // ビューにデータを渡して表示
     return view('products.index', compact('products', 'companies'));
 }
+
     public function edit(Product $product)
     {
         $companies = Company::all(); 

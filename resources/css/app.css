@@ -1,3 +1,17 @@
 .product-image {
     max-width: 100px;
 }
+.delete-button {
+    background-color: #dc3545; /* ボタンの背景色 */
+    color: #fff; /* ボタンのテキスト色 */
+    border: none; /* ボタンの枠線を消去 */
+    padding: 0.375rem 0.75rem; /* ボタンの余白 */
+    font-size: 1rem; /* ボタンのフォントサイズ */
+    cursor: pointer; /* マウスオーバー時のカーソルスタイル */
+    border-radius: 0.25rem; /* ボタンの角丸 */
+    transition: background-color 0.3s ease; /* ホバー時のトランジション */
+}
+
+.delete-button:hover {
+    background-color: #c82333; /* ホバー時の背景色 */
+}

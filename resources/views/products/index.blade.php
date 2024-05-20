@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <h1>商品一覧</h1>
-        <form action="{{ route('products.index') }}" method="GET" class="mb-3">
+        <form id="search-form" action="{{ route('products.index') }}" method="GET" class="mb-3">
             <div class="row">
                 <div class="col-md-4">
                     <input type="text" name="keyword" class="form-control" placeholder="商品名を入力" value="{{ request('keyword') }}">
@@ -37,14 +37,14 @@
         </form>
 
         <a href="{{ route('products.create') }}" class="btn btn-primary mb-3">新規登録</a>
-        <table class="table">
+        <table id="fav-table" class="table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>商品名</th>
-                    <th>価格</th>
-                    <th>在庫数</th>
-                    <th>メーカー</th>
+                    <th>@sortablelink('id', 'ID')</th>
+                    <th>@sortablelink('product_name', '商品名')</th>
+                    <th>@sortablelink('price', '価格')</th>
+                    <th>@sortablelink('stock', '在庫数')</th>
+                    <th>@sortablelink('company.company_name', 'メーカー')</th>
                     <th>商品画像</th>
                     <th>アクション</th>
                 </tr>
@@ -63,7 +63,7 @@
                             <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('本当に削除しますか？')">削除</button>
+                                <button type="submit" class="btn btn-sm btn-danger delete-button" onclick="return confirm('本当に削除しますか？')">削除</button>
                             </form>
                         </td>
                     </tr>
@@ -74,6 +74,11 @@
 @endsection
 
 @push('scripts')
+
+
+
+
+
 <script>
 $(document).ready(function() {
     $('#search-form').submit(function(event) {
