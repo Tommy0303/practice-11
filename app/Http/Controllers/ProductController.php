@@ -44,6 +44,14 @@ class ProductController extends Controller
     // ページネーションを適用してプロダクトを取得
     $products = $query->sortable()->paginate(10);
 
+    // Ajaxリクエストの場合はJSONを返す
+    if ($request->ajax()) {
+        return response()->json([
+            'products' => $products->items(),
+            'links' => (string) $products->links()
+        ]);
+    }
+
     // 会社のリストを取得
     $companies = Company::all();
 
