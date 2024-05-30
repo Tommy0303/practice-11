@@ -12,13 +12,20 @@ class ProductController extends Controller
 {
     public function index(Request $request)
 {
+    
+    // フォームから送られてきた検索条件を取得
+    $params = $request->except('_token');
+
+    // セッションに検索条件を保存
+    session(['searchParams' => $params]);
+    
     // プロダクトのクエリを作成
     $query = Product::query();
 
-    // キーワード検索
     if ($request->filled('keyword')) {
         $query->where('product_name', 'like', '%' . $request->keyword . '%');
     }
+    
 
     // メーカー検索
     if ($request->filled('manufacturer')) {
@@ -41,18 +48,30 @@ class ProductController extends Controller
         $query->where('stock', '<=', $request->stock_max);
     }
 
+    $searchParams = session('searchParams', []);
+    if (!empty($searchParams)) {
+        foreach ($searchParams as $key => $value) {
+            $query->where($key, $value);
+        }
+    }
+
     // ページネーションを適用してプロダクトを取得
-    $products = $query->sortable()->paginate(10);
+    $products = $query->sortable()->paginate(10)->appends($params);
+    $products = $query->with('company')->sortable()->paginate(10)->appends($params);
 
     // Ajaxリクエストの場合はJSONを返す
     if ($request->ajax()) {
-        return response()->json([
+        $products->load('company');
+        $response = [
             'products' => $products->items(),
-            'links' => (string) $products->links()
-        ]);
+            'links' => (string) $products->links(),
+        ];
+        \Log::info('AJAX response with company:', $response); // ここでもログを追加
+        return response()->json($response);
     }
 
     // 会社のリストを取得
+    $products = Product::with('company')->sortable()->paginate(10);
     $companies = Company::all();
 
     // ビューにデータを渡して表示

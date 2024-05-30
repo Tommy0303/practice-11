@@ -13,7 +13,8 @@
                         <select name="manufacturer" class="form-control">
                             <option value="">メーカーを選択</option>
                             @foreach($companies as $company)
-                                <option value="{{ $company->id }}">{{  $company->company_name }}</option>
+                            <option value="{{ $company->id }}" {{ request('manufacturer') == $company->id ? 'selected' : '' }}>
+                            {{ $company->company_name }}
                             @endforeach
                         </select>
                     </div>
@@ -40,18 +41,18 @@
         <table id="fav-table" class="table">
             <thead>
                 <tr>
-                    <th>@sortablelink('id', 'ID')</th>
-                    <th>@sortablelink('product_name', '商品名')</th>
-                    <th>@sortablelink('price', '価格')</th>
-                    <th>@sortablelink('stock', '在庫数')</th>
-                    <th>@sortablelink('company.company_name', 'メーカー')</th>
+                    <th>@sortablelink('id', 'ID', request()->query())</th>
+                    <th>@sortablelink('product_name', '商品名', request()->query())</th>
+                    <th>@sortablelink('price', '価格', request()->query())</th>
+                    <th>@sortablelink('stock', '在庫数', request()->query())</th>
+                    <th>@sortablelink('company.company_name', 'メーカー', request()->query())</th>
                     <th>商品画像</th>
                     <th>アクション</th>
                 </tr>
             </thead>
             <tbody id="product-list">
                 @foreach($products as $product)
-                    <tr id="product-{{ $product->id }}">
+                    <tr>
                         <td>{{ $product->id }}</td>
                         <td>{{ $product->product_name }}</td>
                         <td>{{ $product->price }}</td>
@@ -91,7 +92,7 @@ $(document).ready(function() {
                 $('#product-list').empty();
                 data.products.forEach(function(product) {
                     $('#product-list').append(`
-                        <tr id="product-${product.id}">
+                        <tr>
                             <td>${product.id}</td>
                             <td>${product.product_name}</td>
                             <td>${product.price}</td>
@@ -99,7 +100,7 @@ $(document).ready(function() {
                             <td>${product.company ? product.company.company_name : '未設定'}</td>
                             <td><img src="{{ asset('${product.img_path}') }}" alt="商品画像" class="product-image"></td>
                             <td>
-                                <a href="/products/${product.id}" class="btn btn-sm btn-primary">詳細</a>
+                                <a href="{{ route('products.detail', $product->id) }}" class="btn btn-sm btn-primary">詳細</a>
                                 <form action="/products/${product.id}" method="POST" class="d-inline delete-form" data-id="${product.id}">
                                     @csrf
                                     @method('DELETE')
@@ -138,6 +139,7 @@ $(document).ready(function() {
 
     attachDeleteHandlers();
 });
+
 </script>
 
 @endsection

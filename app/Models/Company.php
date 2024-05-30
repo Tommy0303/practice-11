@@ -13,6 +13,11 @@ class Company extends Model
         'company_name', 
     ];
 
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
     use Sortable;
 
     public $sortable = ['company_name'];

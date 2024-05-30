@@ -14,6 +14,7 @@ class Product extends Model
         'id', 'product_name', 'price', 'stock', 'created_at', 'updated_at' // ソート可能なカラムを指定
     ];
     public $timestamps = true;
+    
     public function company()
     {
         return $this->belongsTo(Company::class, 'company_id');

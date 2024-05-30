@@ -29,3 +29,4 @@ Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name
 Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::get('/products/{product}', [ProductController::class, 'detail'])->name('products.detail');
+Route::get('products/{product}/detail', [ProductController::class, 'detail'])->name('products.detail');
