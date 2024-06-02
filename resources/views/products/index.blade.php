@@ -6,32 +6,32 @@
         <form id="search-form" action="{{ route('products.index') }}" method="GET" class="mb-3">
             <div class="row">
                 <div class="col-md-4">
-                    <input type="text" name="keyword" class="form-control" placeholder="商品名を入力" value="{{ request('keyword') }}">
+                    <input type="text" name="keyword" class="form-control" placeholder="商品名を入力" value="{{ isset($searchParams['keyword']) ? $searchParams['keyword'] : '' }}">
                 </div>
                 @if($companies->count() > 0)
                     <div class="col-md-4">
                         <select name="manufacturer" class="form-control">
                             <option value="">メーカーを選択</option>
                             @foreach($companies as $company)
-                            <option value="{{ $company->id }}" {{ request('manufacturer') == $company->id ? 'selected' : '' }}>
+                            <option value="{{ $company->id }}" {{ isset($searchParams['manufacturer']) && $searchParams['manufacturer'] == $company->id ? 'selected' : '' }}>
                             {{ $company->company_name }}
                             @endforeach
                         </select>
                     </div>
                 @endif
                 <div class="col-md-2">
-                    <input type="number" name="price_min" class="form-control" placeholder="最低価格">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" name="price_max" class="form-control" placeholder="最高価格">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" name="stock_min" class="form-control" placeholder="最低在庫">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" name="stock_max" class="form-control" placeholder="最高在庫">
-                </div>
-                <div class="col-md-2">
+            <input type="number" name="price_min" class="form-control" placeholder="最低価格" value="{{ isset($searchParams['price_min']) ? $searchParams['price_min'] : '' }}">
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="price_max" class="form-control" placeholder="最高価格" value="{{ isset($searchParams['price_max']) ? $searchParams['price_max'] : '' }}">
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="stock_min" class="form-control" placeholder="最低在庫" value="{{ isset($searchParams['stock_min']) ? $searchParams['stock_min'] : '' }}">
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="stock_max" class="form-control" placeholder="最高在庫" value="{{ isset($searchParams['stock_max']) ? $searchParams['stock_max'] : '' }}">
+        </div>
+        <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">検索</button>
                 </div>
             </div>
@@ -39,13 +39,13 @@
 
         <a href="{{ route('products.create') }}" class="btn btn-primary mb-3">新規登録</a>
         <table id="fav-table" class="table">
-            <thead>
+        <thead>
                 <tr>
-                    <th>@sortablelink('id', 'ID', request()->query())</th>
-                    <th>@sortablelink('product_name', '商品名', request()->query())</th>
-                    <th>@sortablelink('price', '価格', request()->query())</th>
-                    <th>@sortablelink('stock', '在庫数', request()->query())</th>
-                    <th>@sortablelink('company.company_name', 'メーカー', request()->query())</th>
+                    <th>@sortablelink('id', 'ID', $searchParams)</th>
+                    <th>@sortablelink('product_name', '商品名', $searchParams)</th>
+                    <th>@sortablelink('price', '価格', $searchParams)</th>
+                    <th>@sortablelink('stock', '在庫数', $searchParams)</th>
+                    <th>@sortablelink('company.company_name', 'メーカー', $searchParams)</th>
                     <th>商品画像</th>
                     <th>アクション</th>
                 </tr>
@@ -72,7 +72,7 @@
             </tbody>
         </table>
         <div id="pagination-links">
-            {{ $products->links() }}
+            {{ $products->appends($searchParams)->links() }}
         </div>
     </div>
 
@@ -82,13 +82,36 @@ $(document).ready(function() {
     console.log("Tablesorter script is loaded.");
     $("#fav-table").tablesorter();
 
+    // ページがロードされたときに、ローカルストレージからフォームの値を取得して設定する
+    if (localStorage.getItem('searchParams')) {
+        var searchParams = JSON.parse(localStorage.getItem('searchParams'));
+        $('#keyword').val(searchParams.keyword);
+        $('#manufacturer').val(searchParams.manufacturer);
+        $('#price_min').val(searchParams.price_min);
+        $('#price_max').val(searchParams.price_max);
+        $('#stock_min').val(searchParams.stock_min);
+        $('#stock_max').val(searchParams.stock_max);
+    }
+
     $('#search-form').submit(function(event) {
         event.preventDefault();
+        var searchParams = {
+            keyword: $('#keyword').val(),
+            manufacturer: $('#manufacturer').val(),
+            price_min: $('#price_min').val(),
+            price_max: $('#price_max').val(),
+            stock_min: $('#stock_min').val(),
+            stock_max: $('#stock_max').val()
+        };
+        localStorage.setItem('searchParams', JSON.stringify(searchParams));
+        
+        // Ajaxリクエストの送信
         $.ajax({
             url: "{{ route('products.index') }}",
             method: 'GET',
-            data: $(this).serialize(),
+            data: searchParams, 
             success: function(data) {
+                console.log("Received data: ", data);  // デバッグ用に追加
                 $('#product-list').empty();
                 data.products.forEach(function(product) {
                     $('#product-list').append(`
@@ -114,6 +137,9 @@ $(document).ready(function() {
                 $('#pagination-links').html(data.links);
 
                 attachDeleteHandlers();
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAXエラー: ", status, error);
             }
         });
     });
@@ -139,6 +165,8 @@ $(document).ready(function() {
 
     attachDeleteHandlers();
 });
+
+
 
 </script>
 

@@ -12,70 +12,63 @@ class ProductController extends Controller
 {
     public function index(Request $request)
 {
-    
     // フォームから送られてきた検索条件を取得
     $params = $request->except('_token');
+    \Log::info('Received params:', $params);
 
     // セッションに検索条件を保存
     session(['searchParams' => $params]);
-    
+    \Log::info('Search parameters saved in session:', $params);
+
     // プロダクトのクエリを作成
     $query = Product::query();
 
-    if ($request->filled('keyword')) {
-        $query->where('product_name', 'like', '%' . $request->keyword . '%');
-    }
-    
+     // セッションから検索条件を取得して再適用
+     $searchParams = session('searchParams', []);
+     \Log::info('Search parameters retrieved from session:', $searchParams);
 
-    // メーカー検索
-    if ($request->filled('manufacturer')) {
-        $query->where('company_id', $request->manufacturer);
+    // 検索条件を適用
+    if (isset($searchParams['keyword']) && !empty($searchParams['keyword'])) {
+        $query->where('product_name', 'like', '%' . $searchParams['keyword'] . '%');
     }
-
-    // 価格検索
-    if ($request->filled('price_min')) {
-        $query->where('price', '>=', $request->price_min);
+    if (isset($searchParams['manufacturer']) && !empty($searchParams['manufacturer'])) {
+        $query->where('company_id', $searchParams['manufacturer']);
     }
-    if ($request->filled('price_max')) {
-        $query->where('price', '<=', $request->price_max);
+    if (isset($searchParams['price_min']) && !empty($searchParams['price_min'])) {
+        $query->where('price', '>=', $searchParams['price_min']);
     }
-
-    // 在庫数検索
-    if ($request->filled('stock_min')) {
-        $query->where('stock', '>=', $request->stock_min);
+    if (isset($searchParams['price_max']) && !empty($searchParams['price_max'])) {
+        $query->where('price', '<=', $searchParams['price_max']);
     }
-    if ($request->filled('stock_max')) {
-        $query->where('stock', '<=', $request->stock_max);
+    if (isset($searchParams['stock_min']) && !empty($searchParams['stock_min'])) {
+        $query->where('stock', '>=', $searchParams['stock_min']);
+    }
+    if (isset($searchParams['stock_max']) && !empty($searchParams['stock_max'])) {
+        $query->where('stock', '<=', $searchParams['stock_max']);
     }
 
-    $searchParams = session('searchParams', []);
-    if (!empty($searchParams)) {
-        foreach ($searchParams as $key => $value) {
-            $query->where($key, $value);
-        }
-    }
-
-    // ページネーションを適用してプロダクトを取得
-    $products = $query->sortable()->paginate(10)->appends($params);
-    $products = $query->with('company')->sortable()->paginate(10)->appends($params);
-
-    // Ajaxリクエストの場合はJSONを返す
     if ($request->ajax()) {
+        // ページネーションを適用してプロダクトを取得
+        $products = $query->with('company')->sortable()->paginate(10)->appends($searchParams);
         $products->load('company');
+
         $response = [
             'products' => $products->items(),
             'links' => (string) $products->links(),
         ];
-        \Log::info('AJAX response with company:', $response); // ここでもログを追加
+        \Log::info('AJAX response:', $response);
         return response()->json($response);
     }
 
+
+    // ページネーションを適用してプロダクトを取得
+    $products = $query->with('company')->sortable()->paginate(10)->appends($params);
+
     // 会社のリストを取得
-    $products = Product::with('company')->sortable()->paginate(10);
     $companies = Company::all();
 
     // ビューにデータを渡して表示
-    return view('products.index', compact('products', 'companies'));
+    return view('products.index', compact('products', 'companies', 'searchParams'));
 }
 
     public function edit(Product $product)
