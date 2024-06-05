@@ -27,8 +27,13 @@
     <script src="{{ asset('js/jquery.tablesorter.min.js') }}"></script>
 
     <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/theme.default.min.css') }}" rel="stylesheet">
+
+    <script type="text/javascript">
+        var productsIndexUrl = "{{ route('products.index') }}";
+        var productDetailUrlTemplate = "{{ route('products.detail', ':id') }}";
+        var productDeleteUrlTemplate = "{{ url('/products/:id') }}";
+    </script>
       
 </head>
 <body>

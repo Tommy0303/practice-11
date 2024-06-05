@@ -16,6 +16,11 @@ class ProductController extends Controller
     $params = $request->except('_token');
     \Log::info('Received params:', $params);
 
+    // キーワードがnullの場合に空文字列に変換
+    if (isset($params['keyword']) && is_null($params['keyword'])) {
+        $params['keyword'] = '';
+    }
+
     // セッションに検索条件を保存
     session(['searchParams' => $params]);
     \Log::info('Search parameters saved in session:', $params);
@@ -47,7 +52,24 @@ class ProductController extends Controller
         $query->where('stock', '<=', $searchParams['stock_max']);
     }
 
+    // ソート条件を取得
+    $sortField = $request->input('sort', 'default_column');
+    \Log::info('Sort field: ' . $sortField);// 追加
+    $sortDirection = $request->input('direction', 'asc');
+
+    // ソート条件に応じてクエリを追加
+if ($sortField === 'manufacturer') {
+    $query->join('companies', 'products.company_id', '=', 'companies.id')
+          ->orderBy('companies.company_name', $sortDirection);
+} elseif ($sortField === 'product_name' || $sortField === 'price' || $sortField === 'stock') {
+    $query->orderBy($sortField, $sortDirection);
+}
+    
+
     if ($request->ajax()) {
+        if ($sortField && $sortDirection) {
+            $query->orderBy($sortField, $sortDirection);
+        }
         // ページネーションを適用してプロダクトを取得
         $products = $query->with('company')->sortable()->paginate(10)->appends($searchParams);
         $products->load('company');
@@ -62,13 +84,13 @@ class ProductController extends Controller
 
 
     // ページネーションを適用してプロダクトを取得
-    $products = $query->with('company')->sortable()->paginate(10)->appends($params);
-
+    $products = $query->with('company')->sortable()->paginate(10)->appends($searchParams);
+    $products->load('company');
     // 会社のリストを取得
     $companies = Company::all();
 
     // ビューにデータを渡して表示
-    return view('products.index', compact('products', 'companies', 'searchParams'));
+    return view('products.index', compact('products', 'companies', 'searchParams', 'sortField', 'sortDirection'));
 }
 
     public function edit(Product $product)
