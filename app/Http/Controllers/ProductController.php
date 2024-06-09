@@ -53,18 +53,22 @@ class ProductController extends Controller
     }
 
     // ソート条件を取得
-    $sortField = $request->input('sort', 'default_column');
-    \Log::info('Sort field: ' . $sortField);// 追加
+    $sortField = $request->input('sort', 'id');
+    \Log::info('Sort field before applying sort: ' . $sortField); // 追加
     $sortDirection = $request->input('direction', 'asc');
+    \Log::info('Sort direction before applying sort: ' . $sortDirection); // 追加
 
-    // ソート条件に応じてクエリを追加
-if ($sortField === 'manufacturer') {
-    $query->join('companies', 'products.company_id', '=', 'companies.id')
-          ->orderBy('companies.company_name', $sortDirection);
-} elseif ($sortField === 'product_name' || $sortField === 'price' || $sortField === 'stock') {
-    $query->orderBy($sortField, $sortDirection);
-}
-    
+    if ($sortField === 'company.company_name') {
+        $query->join('companies', 'products.company_id', '=', 'companies.id')
+              ->orderBy('companies.company_name', $sortDirection);
+    } else {
+        $query->orderBy($sortField, $sortDirection);
+    }
+
+    \Log::info('Final Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
+
+    \Log::info('Query after applying sort: ' . $query->toSql()); // 追加
 
     if ($request->ajax()) {
         if ($sortField && $sortDirection) {

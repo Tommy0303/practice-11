@@ -42,11 +42,11 @@
         <table id="fav-table" class="table">
         <thead>
                 <tr>
-                    <th>@sortablelink('id', 'ID', $searchParams)</th>
-                    <th>@sortablelink('product_name', '商品名', $searchParams)</th>
-                    <th>@sortablelink('price', '価格', $searchParams)</th>
-                    <th>@sortablelink('stock', '在庫数', $searchParams)</th>
-                    <th>@sortablelink('company.company_name', 'メーカー', $searchParams)</th>
+                    <th data-column="id">@sortablelink('id', 'ID')</th>
+                    <th data-column="product_name">@sortablelink('product_name', '商品名')</th>
+                    <th data-column="price">@sortablelink('price', '価格')</th>
+                    <th data-column="stock">@sortablelink('stock', '在庫数')</th>
+                    <th data-column="company_name">@sortablelink('company.company_name', 'メーカー')</th>
                     <th>商品画像</th>
                     <th>アクション</th>
                 </tr>
@@ -82,7 +82,15 @@
 $(document).ready(function() {
     console.log("Tablesorter script is loaded.");
 
-    var sortField = null, sortDirection = null;
+    var sortField = null, sortDirection = 'asc';
+
+    var columnMap = {
+        0: 'id',
+        1: 'product_name',
+        2: 'price',
+        3: 'stock',
+        4: 'company_name',
+    };
 
     // ページがロードされたときに、ローカルストレージからフォームの値を取得して設定する
     if (localStorage.getItem('searchParams')) {
@@ -95,17 +103,33 @@ $(document).ready(function() {
         $('#stock_max').val(searchParams.stock_max);
 
         if (searchParams.sort) sortField = searchParams.sort;
+        console.log("Sort field:", sortField);
         if (searchParams.direction) sortDirection = searchParams.direction;
+        console.log("Sending searchParams: ", searchParams);
     }
 
-    $("#fav-table").tablesorter().bind('sortEnd', function(event) {
+    var sortList = [];
+    if (sortField && sortDirection) {
+        var columnIndex = Object.keys(columnMap).find(key => columnMap[key] === sortField);
+        sortList = [[columnIndex, sortDirection === 'asc' ? 0 : 1]];
+    }
+
+    $("#fav-table").tablesorter({
+        sortList: sortField && sortDirection ? [[Object.keys(columnMap).find(key => columnMap[key] === sortField), sortDirection === 'asc' ? 0 : 1]] : []
+        }).bind('sortEnd', function(event) {
         var table = $(this);
         var sort = table.get(0).config.sortList;
 
         if (sort.length > 0) {
             var sortItem = sort[0];
-            sortField = table.find('th').eq(sortItem[0]).attr('data-column');
+            var columnIndex = sortItem[0];
+            sortField = columnMap[columnIndex];
             sortDirection = sortItem[1] === 0 ? 'asc' : 'desc';
+
+            console.log("Sort field after sortEnd:", sortField);
+            console.log("Sort direction after sortEnd:", sortDirection);
+
+            performSearch(); // ソート後に検索を再実行
         }
     });
 
@@ -122,34 +146,20 @@ $(document).ready(function() {
             price_min: $('#price_min').val(),
             price_max: $('#price_max').val(),
             stock_min: $('#stock_min').val(),
-            stock_max: $('#stock_max').val()
+            stock_max: $('#stock_max').val(),
+            sort: sortField, // ソートフィールドを設定
+            direction: sortDirection // ソート方向を設定
         };
     
 
-        console.log("Keyword:", keyword);
-        console.log("Manufacturer:", searchParams.manufacturer);
-        console.log("Price_min:", searchParams.price_min);
-        console.log("Price_max:", searchParams.price_max);
-        console.log("Stock_min:", searchParams.stock_min);
-        console.log("Stock_max:", searchParams.stock_max);
-
-
 
         console.log("Sending searchParams: ", searchParams);
-
-        if (sortField) {
-    searchParams.sort = sortField; // ソートフィールドが存在する場合にのみ設定
-}
-console.log("Sort field:", sortField);
-if (sortDirection) {
-    searchParams.direction = sortDirection; // ソート方向が存在する場合にのみ設定
-}
         
         localStorage.setItem('searchParams', JSON.stringify(searchParams));
         
         // Ajaxリクエストの送信
         $.ajax({
-            url: productsIndexUrl,
+            url: "{{ route('products.index') }}",
             method: 'GET',
             data: {...searchParams, sort: sortField, direction: sortDirection}, 
             success: function(data) {
