@@ -59,7 +59,7 @@ class ProductController extends Controller
     \Log::info('Sort direction before applying sort: ' . $sortDirection); // 追加
 
     if ($sortField === 'company.company_name') {
-        $query->join('companies', 'products.company_id', '=', 'companies.id')
+        $query->join('companies as c', 'products.company_id', '=', 'c.id')
               ->orderBy('companies.company_name', $sortDirection);
     } else {
         $query->orderBy($sortField, $sortDirection);
