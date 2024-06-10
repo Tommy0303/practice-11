@@ -82,16 +82,6 @@
 $(document).ready(function() {
     console.log("Tablesorter script is loaded.");
 
-    var sortField = null, sortDirection = 'asc';
-
-    var columnMap = {
-        0: 'id',
-        1: 'product_name',
-        2: 'price',
-        3: 'stock',
-        4: 'company_name',
-    };
-
     // ページがロードされたときに、ローカルストレージからフォームの値を取得して設定する
     if (localStorage.getItem('searchParams')) {
         var searchParams = JSON.parse(localStorage.getItem('searchParams'));
@@ -101,71 +91,32 @@ $(document).ready(function() {
         $('#price_max').val(searchParams.price_max);
         $('#stock_min').val(searchParams.stock_min);
         $('#stock_max').val(searchParams.stock_max);
-
-        if (searchParams.sort) sortField = searchParams.sort;
-        console.log("Sort field:", sortField);
-        if (searchParams.direction) sortDirection = searchParams.direction;
-        console.log("Sending searchParams: ", searchParams);
+        $('#sort').val(searchParams.sort);
+        $('#direction').val(searchParams.direction);
     }
 
-    var sortList = [];
-    if (sortField && sortDirection) {
-        var columnIndex = Object.keys(columnMap).find(key => columnMap[key] === sortField);
-        sortList = [[columnIndex, sortDirection === 'asc' ? 0 : 1]];
-    }
-
-    $("#fav-table").tablesorter({
-        sortList: sortField && sortDirection ? [[Object.keys(columnMap).find(key => columnMap[key] === sortField), sortDirection === 'asc' ? 0 : 1]] : []
-        }).bind('sortEnd', function(event) {
-        var table = $(this);
-        var sort = table.get(0).config.sortList;
-
-        if (sort.length > 0) {
-            var sortItem = sort[0];
-            var columnIndex = sortItem[0];
-            sortField = columnMap[columnIndex];
-            sortDirection = sortItem[1] === 0 ? 'asc' : 'desc';
-
-            console.log("Sort field after sortEnd:", sortField);
-            console.log("Sort direction after sortEnd:", sortDirection);
-
-            performSearch(); // ソート後に検索を再実行
-        }
+    $('#search-form').on('submit', function(e) {
+        e.preventDefault();
+        var params = $(this).serialize();
+        fetchProducts(params);
     });
 
-    $('#search-form').submit(function(event) {
-        event.preventDefault();
-        performSearch();
+    // ソートリンクのクリックイベントをハンドル
+    $('.sort-link').on('click', function(e) {
+        e.preventDefault();
+        var params = $('#search-form').serialize();
+        params += '&sort=' + $(this).data('sort');
+        params += '&direction=' + $(this).data('direction');
+        fetchProducts(params);
     });
 
-    function performSearch() {
-        var keyword = $('#keyword').val().trim();
-        var searchParams = {
-            keyword: keyword === '' ? '' : keyword,
-            manufacturer: $('#manufacturer').val(),
-            price_min: $('#price_min').val(),
-            price_max: $('#price_max').val(),
-            stock_min: $('#stock_min').val(),
-            stock_max: $('#stock_max').val(),
-            sort: sortField, // ソートフィールドを設定
-            direction: sortDirection // ソート方向を設定
-        };
-    
-
-
-        console.log("Sending searchParams: ", searchParams);
-        
-        localStorage.setItem('searchParams', JSON.stringify(searchParams));
-        
         // Ajaxリクエストの送信
         $.ajax({
-            url: "{{ route('products.index') }}",
+            url: "/products",
             method: 'GET',
-            data: {...searchParams, sort: sortField, direction: sortDirection}, 
+            data: params,
             success: function(data) {
                 console.log("Received data: ", data);  // デバッグ用に追加
-                console.log("Sort field:", sortField);
-                console.log("Sort direction:", sortDirection);
                 $('#product-list').empty();
                 data.products.forEach(function(product) {
                     $('#product-list').append(`
@@ -175,7 +126,7 @@ $(document).ready(function() {
                             <td>${product.price}</td>
                             <td>${product.stock}</td>
                             <td>${product.company ? product.company.company_name : '未設定'}</td>
-                            <td><img src="{{ asset('${product.img_path}') }}" alt="商品画像" class="product-image"></td>
+                            <td><img src="${product.img_path}" alt="商品画像" class="product-image"></td>
                             <td>
                                 <a href="${productDetailUrlTemplate.replace(':id', product.id)}" class="btn btn-sm btn-primary">詳細</a>
                                 <form action="${productDeleteUrlTemplate.replace(':id', product.id)}" method="POST" class="d-inline delete-form" data-id="${product.id}">
@@ -185,10 +136,14 @@ $(document).ready(function() {
                                 </form>
                             </td>
                         </tr>
+                        
                     `);
                 });
 
                 $('#pagination-links').html(data.links);
+
+                // テーブルの更新
+                $("#fav-table").trigger("update");
 
                 attachDeleteHandlers();
             },
@@ -196,7 +151,8 @@ $(document).ready(function() {
                 console.error("AJAXエラー: ", status, error);
             }
         });
-    };
+    }
+    fetchProducts($('#search-form').serialize());
 
     function attachDeleteHandlers() {
         $('.delete-form').off('submit').on('submit', function(event) {
@@ -211,6 +167,7 @@ $(document).ready(function() {
                     data: form.serialize(),
                     success: function() {
                         $('#product-' + productId).remove();
+                        $("#product-table").trigger("update"); // テーブルの更新
                     }
                 });
             }
@@ -218,7 +175,8 @@ $(document).ready(function() {
     }
 
     attachDeleteHandlers();
-});
+);
+
 
 
 
